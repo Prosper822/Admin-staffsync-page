@@ -61,7 +61,7 @@ export default function Admin({ setSidebarOpen }) {
             <h1 className="text-2xl md:text-2xl font-bold text-slate-900 leading-tight">Welcome back.</h1>
             <p className="text-slate-500 md:text-sm">Here's what's happening with your agency today.</p>
           </div>
-          <button className="w-[50] sm:w-auto bg-[#000035] text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
+          <button className="w-full sm:w-auto bg-[#000035] text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
             <Plus size={18} /> Add New Job
           </button>
         </div>
