@@ -63,7 +63,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           <div className="flex items-center gap-3 p-2">
             <img src="https://i.pravatar.cc/150?u=john" className="w-10 h-10 rounded-full border-2 border-white/10" alt="Admin" />
             <div className="flex-1 min-w-0 text-sm">
-              <p className="font-bold text-white truncate">John Admin</p>
+              <p className="font-bold text-white truncate">Oluwasuyi Lawson</p>
               <p className="text-xs text-slate-500 truncate">Administrator</p>
             </div>
             <ChevronDown size={16} />
