@@ -20,40 +20,48 @@ export default function Admin({ setSidebarOpen }) {
   const [newJob, setNewJob] = useState({ title: '', department: '', type: 'Full-time' });
 
   useEffect(() => {
-    const getDashboardData = async () => {
-      try {
-        const data = await fetchCandidates(); 
-        setCandidates(data);
-        
-        const uniquePositions = [...new Set(data.map(c => c.position))].filter(Boolean);
-        
-        setStats(prev => ({
-          ...prev,
-          jobs: uniquePositions.length || 0,
-          candidates: data.length,
-          apps: data.length
-        }));
-      } catch (error) {
-        console.error("Failed to fetch admin data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    getDashboardData();
-  }, []);
+  const getDashboardData = async () => {
+    try {
+      // Fetch BOTH sets of data
+      const [candidateData, jobData] = await Promise.all([
+        fetchCandidates(),
+        fetchJobs()
+      ]);
+
+      setCandidates(candidateData);
+      setJobs(jobData); // <--- This fills your "Manage Live Postings" section
+
+      // Use jobData.length for a more accurate Live Jobs count
+      setStats(prev => ({
+        ...prev,
+        jobs: jobData.length, 
+        candidates: candidateData.length,
+        apps: candidateData.length
+      }));
+    } catch (error) {
+      console.error("Failed to fetch admin data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  getDashboardData();
+}, []);
 
   // 2. Handle Job Submission
   const handleAddJob = async (e) => {
-    e.preventDefault();
-    try {
-      await createJob(newJob);
-      alert("Job posted successfully!");
-      setIsModalOpen(false);
-      // Optional: Re-fetch data here to update the "Live Jobs" count
-    } catch (err) {
-      alert("Failed to post job");
-    }
-  };
+  e.preventDefault();
+  try {
+    const response = await createJob(newJob); // Assuming backend returns the new job object
+    alert("Job posted successfully!");
+    setIsModalOpen(false);
+    
+    // Update UI immediately without full page refresh
+    setJobs(prevJobs => [response, ...prevJobs]);
+    setStats(prev => ({ ...prev, jobs: prev.jobs + 1 }));
+  } catch (err) {
+    alert("Failed to post job");
+  }
+};
 
 
   // DELETE JOBS
