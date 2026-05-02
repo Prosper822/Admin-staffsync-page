@@ -1,16 +1,14 @@
 import axios from 'axios';
 
-// Your live Vercel backend URL
-const API_URL = "https://staffsync-career-backend.vercel.app";
+// 1. Keep the base URL as the root of your admin API
+const API_URL = "https://staffsync-career-backend.vercel.app/api/admin";
 
 /**
  * Fetches all candidates/applicants from the database.
- * This is used by both the Admin page for analytics 
- * and the Workers Dashboard for management.
  */
 export const fetchCandidates = async () => {
   try {
-    // This will now call .../api/admin/candidates
+    // This will now correctly call: https://staffsync-career-backend.vercel.app/api/admin/candidates
     const response = await axios.get(`${API_URL}/candidates`); 
     return response.data;
   } catch (error) {
@@ -19,12 +17,56 @@ export const fetchCandidates = async () => {
   }
 };
 
+export const deleteCandidate = async (id) => {
+  try {
+    const response = await axios.delete(`${API_URL}/candidates/${id}`); 
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting candidate:", error);
+    throw error;
+  }
+};
+
+// jobs
+export const fetchJobs = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/jobs`); 
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+    throw error;
+  }
+};
+
+
+// create jobs
+export const createJob = async (jobData) => {
+  try {
+    const response = await axios.post(`${API_URL}/jobs`, jobData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating job:", error);
+    throw error;
+  }
+};
+
+// delete job
+export const deleteJob = async (id) => {
+  try {
+    const response = await axios.delete(`${API_URL}/jobs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    throw error;
+  }
+};
+
 /**
- * Updates a candidate's status (e.g., from 'Pending' to 'Hired').
- * Useful for the Admin page actions.
+ * Updates a candidate's status.
  */
 export const updateCandidateStatus = async (id, status) => {
   try {
+    // This will now correctly call: https://staffsync-career-backend.vercel.app/api/admin/candidates/[id]
     const response = await axios.patch(`${API_URL}/candidates/${id}`, { status });
     return response.data;
   } catch (error) {
@@ -32,3 +74,4 @@ export const updateCandidateStatus = async (id, status) => {
     throw error;
   }
 };
+
