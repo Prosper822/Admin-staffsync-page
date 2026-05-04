@@ -8,13 +8,19 @@ const API_URL = "https://staffsync-career-backend.vercel.app/api/admin";
  */
 export const fetchCandidates = async () => {
   try {
-    // This will now correctly call: https://staffsync-career-backend.vercel.app/api/admin/candidates
     const response = await axios.get(`${API_URL}/candidates`); 
     return response.data;
   } catch (error) {
     console.error("Error fetching candidates:", error);
     throw error;
   }
+};
+
+export const fetchPublicJobs = async () => {
+    // We point to /api/career instead of /api/admin
+    const PUBLIC_URL = "https://staffsync-career-backend.vercel.app/api/career";
+    const response = await axios.get(PUBLIC_URL); 
+    return response.data;
 };
 
 export const deleteCandidate = async (id) => {
@@ -30,14 +36,13 @@ export const deleteCandidate = async (id) => {
 // jobs
 export const fetchJobs = async () => {
   try {
-    const response = await axios.get(`${API_URL}/jobs`); 
+    const response = await axios.get(`${API_URL}/jobs`);
     return response.data;
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;
   }
 };
-
 
 // create jobs
 export const createJob = async (jobData) => {
