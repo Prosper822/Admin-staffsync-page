@@ -4,13 +4,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Sidebar from "./Components/Sidebar";
 import Admin from "./Components/Admin";
 import Jobs from "./Components/Jobs";
-import Applications from "./Components/Applications";
-import Candidates from "./Components/Candidates";
+import Topbar from "./Components/Topbar";
 import Clients from "./Components/Clients";
-import Reports from "./Components/Reports";
-import Messages from "./Components/Messages";
-import Notifications from "./Components/Notifications";
-import Settings from "./Components/Settings";
+import Recruitment from "./Components/Recruitment"
+import Inbox from "./Components/Inbox"
+
+
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -41,28 +40,22 @@ export default function App() {
               element={<Jobs setSidebarOpen={setSidebarOpen} />} 
             />
             
-             <Route 
-              path="/apps" 
-              element={<Applications setSidebarOpen={setSidebarOpen} />} 
-            />
-
-            <Route 
-              path="/workers" 
-              element={<Candidates setSidebarOpen={setSidebarOpen} />} 
-            />
-
             <Route 
               path="/clients" 
               element={<Clients setSidebarOpen={setSidebarOpen} />} 
+
+            />
+
+             <Route 
+              path="/recruitment" 
+              element={<Recruitment setSidebarOpen={setSidebarOpen} />} 
+            />
+
+            <Route 
+              path="/inbox" 
+              element={<Inbox setSidebarOpen={setSidebarOpen} />} 
             />
              
-             <Route path="/reports" element={<Reports setSidebarOpen={setSidebarOpen} />} />
-              
-              <Route path="/messages" element={<Messages setSidebarOpen={setSidebarOpen} />} />
-            
-
-             <Route path="/notifs" element={<Notifications setSidebarOpen={setSidebarOpen} />} />
-<Route path="/settings" element={<Settings setSidebarOpen={setSidebarOpen} />} />
 
             
             {/* Add other routes here */}

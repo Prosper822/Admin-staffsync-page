@@ -97,6 +97,7 @@ export default function Jobs({ setSidebarOpen }) {
             <Plus size={18} /> Post New Job
           </button>
         </div>
+        
 
         {/* Jobs Table */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">

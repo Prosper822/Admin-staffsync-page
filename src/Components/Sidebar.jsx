@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  LayoutGrid, Briefcase, FileText, Users, 
-  Building2, BarChart3, MessageSquare, Bell, Settings, ChevronDown 
+  LayoutDashboard, Briefcase, FileText, Users, 
+  Building2, BarChart3, MessageSquare, Bell, Mail, Settings, ChevronDown 
 } from 'lucide-react';
 import logo from '../assets/1000562327.png';
 
@@ -16,16 +16,12 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const menuItems = [
-    { label: 'Dashboard', icon: LayoutGrid, path: '/admin' },
-    { label: 'Jobs', icon: Briefcase, path: '/jobs' },
-    { label: 'Applications', icon: FileText, path: '/apps' },
-    { label: 'Candidates', icon: Users, path: '/workers' },
-    { label: 'Clients', icon: Building2, path: '/clients' },
-    { label: 'Reports', icon: BarChart3, path: '/reports' },
-    { label: 'Messages', icon: MessageSquare, path: '/messages', badge: 12 },
-    { label: 'Notifications', icon: Bell, path: '/notifs', badge: 8 },
-    { label: 'Settings', icon: Settings, path: '/settings' },
-  ];
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' }, // Your home admin.jsx
+  { label: 'Jobs', icon: Briefcase, path: '/jobs' },             // Manages your Vercel/MongoDB listings
+  { label: 'Recruitment', icon: Users, path: '/recruitment' },  // Merged Applications + Candidates
+  { label: 'Inbox', icon: Mail, path: '/inbox' },               // Communications and notifications
+  { label: 'Clients', icon: Building2, path: '/clients' },      // Partner companies
+];
 
   return (
     <>

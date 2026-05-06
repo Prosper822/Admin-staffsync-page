@@ -8,6 +8,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { fetchCandidates, createJob, deleteJob, fetchJobs, deleteCandidate } from '../api/index'; 
+import Topbar from './Topbar';
 
 export default function Admin({ setSidebarOpen }) {
   const [candidates, setCandidates] = useState([]);
@@ -22,14 +23,16 @@ export default function Admin({ setSidebarOpen }) {
   useEffect(() => {
   const getDashboardData = async () => {
     try {
-      // Fetch BOTH sets of data
       const [candidateData, jobData] = await Promise.all([
         fetchCandidates(),
         fetchJobs()
       ]);
 
+      // CHECK THIS IN YOUR BROWSER CONSOLE (F12)
+      console.log("FETCHED CANDIDATES:", candidateData); 
+
       setCandidates(candidateData);
-      setJobs(jobData); // <--- This fills your "Manage Live Postings" section
+      setJobs(jobData);
 
       // Use jobData.length for a more accurate Live Jobs count
       setStats(prev => ({
@@ -116,20 +119,7 @@ const handleDeleteCandidate = async (candidateId) => {
 
   return (
     <div className="w-full pb-10">
-      <header className="h-16 bg-white border-b border-slate-200 fixed top-0 right-0 z-40 left-0 lg:left-64 px-4 md:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden cursor-pointer p-2 text-slate-600 rounded-xl hover:bg-slate-50"><Menu size={22} /></button>
-          <div className="relative max-w-md w-full hidden sm:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input type="text" placeholder="Search applications..." className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none" />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-full relative"><Bell size={20}/></button>
-          <img src="https://i.pravatar.cc/150?u=admin" className="w-8 h-8 rounded-full border border-slate-200 ml-2" alt="profile" />
-        </div>
-      </header>
-
+      <Topbar setSidebarOpen={setSidebarOpen} />
       <main className="mt-16 p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className='mt-4'>
@@ -244,45 +234,47 @@ const handleDeleteCandidate = async (candidateId) => {
                   <th className="px-6 py-4 text-right pr-10">Actions</th>
                 </tr>
               </thead>
+    <tbody className="divide-y divide-slate-100">
+  {/* 1. Copy the array, 2. Reverse it for recency, 3. Map it */}
+  {[...candidates].reverse().map((app, i) => {
+    return (
+      <tr key={app._id || i} className="hover:bg-slate-50 transition-colors">
+        <td className="px-6 py-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 text-xs border border-indigo-100">
+            {(app.fullName || app.name || "?").charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-900">
+              {app.fullName || app.name || "Unnamed Candidate"}
+            </p>
+            <p className="text-[11px] text-slate-400">{app.email}</p>
+          </div>
+        </td>
 
-              <tbody className="divide-y divide-slate-100">
-                {candidates.slice(0, 6).map((app, i) => (
-                  <tr key={app._id || i} className="hover:bg-slate-50 transition-colors">
+        <td className="px-6 py-4 text-sm font-bold text-slate-900">
+          {app.position || "Staff"}
+        </td>
+        
+        <td className="px-6 py-4">
+          <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+            app.status === 'Hired' ? 'bg-emerald-50 text-emerald-600' : 
+            app.status === 'Rejected' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+          }`}>
+            {app.status || 'Pending'}
+          </span>
+        </td>
 
-
-                    {/* 1. MISSING CANDIDATE COLUMN (Add this back) */}
-      <td className="px-6 py-4 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 text-xs border border-indigo-100">
-          {(app.fullName || app.name || "?").charAt(0)}
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-900">{app.fullName || app.name}</p>
-          <p className="text-[11px] text-slate-400">{app.email}</p>
-        </div>
-      </td>
-
-      {/* 2. JOB POSITION */}
-      <td className="px-6 py-4 text-sm font-bold text-slate-900">{app.position || "Staff"}</td>
-      
-      {/* 3. STATUS */}
-      <td className="px-6 py-4">
-        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-          app.status === 'Hired' ? 'bg-emerald-50 text-emerald-600' : 
-          app.status === 'Rejected' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-        }`}>
-          {app.status || 'Pending'}
-        </span>
-      </td>
-
-      {/* 4. ACTIONS */}
-      <td className="px-6 py-4 text-right pr-10">
-        <button className="p-2 text-slate-300 hover:text-slate-600 cursor-pointer">
-          <MoreVertical size={18}/>
-        </button>
-      </td>
-
-    </tr>
-  ))}
+        <td className="px-6 py-4 text-right pr-10">
+          <button 
+            onClick={() => handleDeleteCandidate(app._id)}
+            className="p-2 text-slate-300 hover:text-red-500 cursor-pointer transition-colors"
+          >
+            <Trash2 size={16}/>
+          </button>
+        </td>
+      </tr>
+    );
+  })}
 </tbody>
             </table>
           </div>
