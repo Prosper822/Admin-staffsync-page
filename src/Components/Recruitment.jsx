@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, FileText, RefreshCw, User, Mail, Briefcase, ExternalLink } from 'lucide-react';
 import Topbar from './Topbar';
+import Swal from 'sweetalert2';
 
 const Recruitment = ({ setSidebarOpen }) => {
   const [candidates, setCandidates] = useState([]);
@@ -26,25 +27,42 @@ const Recruitment = ({ setSidebarOpen }) => {
     fetchCandidates();
   }, []);
 
-  const handleStatusUpdate = async (id, status, applicantEmail, applicantName) => {
-    const confirmAction = window.confirm(`Send real ${status} email to ${applicantName}?`);
-    if (!confirmAction) return;
+const handleStatusUpdate = async (id, status, applicantEmail, applicantName) => {
+  // Replace window.confirm with Swal.fire
+  const result = await Swal.fire({
+    title: 'Confirm Decision',
+    text: `Send real ${status} email to ${applicantName}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#000035', // StaffSync Navy
+    cancelButtonColor: '#d33',
+    confirmButtonText: `Yes, ${status} them!`
+  });
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/applications/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, email: applicantEmail, name: applicantName })
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, email: applicantEmail, name: applicantName })
+    });
+
+    if (response.ok) {
+      // Replace alert with a success modal
+      Swal.fire({
+        title: 'Success!',
+        text: 'Email sent and status updated.',
+        icon: 'success',
+        confirmButtonColor: '#000035'
       });
-
-      if (response.ok) {
-        alert("Email sent and status updated!");
-        fetchCandidates();
-      }
-    } catch (error) {
-      alert("Network error. Check backend.");
+      fetchCandidates();
     }
-  };
+  } catch (error) {
+    // Replace alert with an error modal
+    Swal.fire('Error', 'Network error. Is your backend running?', 'error');
+  }
+};
 
   return (
     <div className="w-full min-h-screen bg-slate-50">

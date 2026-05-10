@@ -1,174 +1,216 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Send, User, MoreVertical, Paperclip, Smile, Loader2 } from 'lucide-react';
-import Topbar from './Topbar';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Search, Send, MoreVertical, ChevronLeft, Paperclip, Loader2, Mail 
+} from 'lucide-react';
+import Topbar from '../components/Topbar'; 
+import { fetchCandidates } from '../api/index'; 
+
+// Production API base URL
+const API_BASE_URL = 'https://staffsync-career-backend.vercel.app/api';
 
 export default function Inbox({ setSidebarOpen }) {
-  const [conversations, setConversations] = useState([]);
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const scrollRef = useRef(null);
 
-  const API_BASE_URL = "https://staffsync-career-backend.vercel.app";
-
-  // 1. Fetch all conversations/contacts on mount
+  // Fetch Candidates
   useEffect(() => {
-    const fetchInbox = async () => {
+    const getCandidates = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/messages/conversations`);
-        const data = await response.json();
-        setConversations(data);
+        const data = await fetchCandidates();
+        let allCandidates = Array.isArray(data) ? data : [];
+        allCandidates.sort((a, b) => {
+          if (b.createdAt && a.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
+          return b._id.toString().localeCompare(a._id.toString());
+        });
+        setCandidates(allCandidates);
       } catch (error) {
-        console.error("Error fetching inbox:", error);
+        console.error("Failed to load candidates:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchInbox();
+    getCandidates();
   }, []);
 
-  // 2. Fetch specific messages when a chat is selected
+  // Fetch History
   useEffect(() => {
-    if (!activeChat) return;
-
-    const fetchMessages = async () => {
+    const fetchChatHistory = async () => {
+      if (!activeChat) return;
       try {
-        const response = await fetch(`${API_BASE_URL}/api/messages/${activeChat._id}`);
+        const candidateId = activeChat._id || activeChat.id;
+        const response = await fetch(`${API_BASE_URL}/messages/history/${candidateId}`);
         const data = await response.json();
-        setMessages(data);
+        setMessages(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Error fetching messages:", error);
+        setMessages([]);
       }
     };
-    fetchMessages();
-    
-    // Optional: Set up polling to check for new messages every 5 seconds
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
+    fetchChatHistory();
   }, [activeChat]);
 
-  // 3. Send a new message to the backend
-  const handleSendMessage = async (e) => {
+  // Auto-scroll
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChat) return;
-
-    const messageData = {
-      recipientId: activeChat._id,
-      text: newMessage,
-      sender: "Admin" // Or your logged-in user state
-    };
-
+    const candidateId = activeChat._id || activeChat.id;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/messages/send`, {
+      const response = await fetch(`${API_BASE_URL}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messageData)
+        body: JSON.stringify({ candidateId, sender: 'me', text: newMessage })
       });
-
-      if (response.ok) {
-        const savedMsg = await response.json();
-        setMessages([...messages, savedMsg]); // Optimistic update
-        setNewMessage("");
-      }
+      const savedMsg = await response.json();
+      setMessages((prev) => [...prev, {
+        ...savedMsg,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+      setNewMessage("");
     } catch (error) {
-      alert("Failed to send message. Check connection.");
+      console.error("Failed to send message:", error);
     }
   };
 
+  const filteredCandidates = candidates.filter(c => {
+    const name = c.name || c.fullName || "";
+    const role = c.jobTitle || c.position || "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           role.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  if (loading) return (
+    <div className="h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+      <Loader2 className="w-10 h-10 text-[#000035] animate-spin mb-4" />
+      <p className="text-slate-500 font-medium">Syncing candidates...</p>
+    </div>
+  );
+
   return (
-    <div className="w-full min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col overflow-hidden">
       <Topbar setSidebarOpen={setSidebarOpen} />
 
-      <main className="pt-24 pb-6 px-4 flex-grow flex flex-col">
-        <div className="max-w-7xl mx-auto w-full h-[calc(100vh-140px)]  rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex">
+      {/* 
+          FIXED LAYOUT:
+          - lg:ml-64 matches your Sidebar width exactly.
+          - Removed 'w-full' to prevent the layout from pushing past the screen edge.
+          - h-screen ensures the chat occupies the full vertical space.
+      */}
+      <main className="flex-grow pt-16 flex lg:ml-64 h-screen transition-all duration-300 overflow-hidden">
+        <div className="flex w-full h-full bg-white shadow-sm overflow-hidden">
           
-          {/* Sidebar: Conversation List */}
-          <div className="w-full md:w-1/3 border-r border-slate-100 flex flex-col bg-white">
-            <div className="p-6 border-b border-slate-100">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Messages</h2>
+          {/* LIST SECTION */}
+          <div className={`w-full md:w-80 lg:w-[380px] border-r border-slate-100 flex flex-col bg-white ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+            <div className="p-6 border-b border-slate-50">
+              <h1 className="text-2xl font-bold text-slate-900 mb-4">Messages</h1>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Search..." 
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#000035]"
+                  placeholder="Search candidates..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#000035]/10"
                 />
               </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto">
-              {loading ? (
-                <div className="flex justify-center p-10"><Loader2 className="animate-spin text-slate-300" /></div>
-              ) : (
-                conversations.map((chat) => (
-                  <div 
-                    key={chat._id}
-                    onClick={() => setActiveChat(chat)}
-                    className={`p-4 flex items-center gap-4 cursor-pointer transition-all hover:bg-slate-50 ${activeChat?._id === chat._id ? 'bg-slate-50 border-r-4 border-[#000035]' : ''}`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[#000035]">
-                      {chat.name?.charAt(0) || 'U'}
-                    </div>
-                    <div className="flex-grow overflow-hidden">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-bold text-slate-900 truncate">{chat.name || chat.email}</h4>
-                        <span className="text-[10px] text-slate-400">
-                          {chat.lastActive ? new Date(chat.lastActive).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 truncate">{chat.lastMessage || "No messages yet"}</p>
-                    </div>
+            <div className="flex-grow overflow-y-auto custom-scrollbar">
+              {filteredCandidates.map((candidate) => (
+                <div 
+                  key={candidate._id}
+                  onClick={() => setActiveChat(candidate)}
+                  className={`p-4 mx-3 my-1 rounded-2xl cursor-pointer transition-all flex items-center gap-4 border ${
+                    activeChat?._id === candidate._id 
+                    ? 'bg-[#000035] text-white border-[#000035] shadow-md' 
+                    : 'hover:bg-slate-50 border-transparent text-slate-900'
+                  }`}
+                >
+                  <div className={`w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center font-bold ${
+                    activeChat?._id === candidate._id ? 'bg-white/20' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {(candidate.name || candidate.fullName || "?").charAt(0)}
                   </div>
-                ))
-              )}
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-bold truncate text-sm">
+                      {candidate.name || candidate.fullName}
+                    </h3>
+                    <p className={`text-xs truncate ${activeChat?._id === candidate._id ? 'text-blue-100' : 'text-slate-500'}`}>
+                      {candidate.jobTitle || 'Applicant'}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Main: Chat Window */}
-          <div className="hidden md:flex flex-col flex-grow bg-slate-50/30">
+          {/* CHAT SECTION */}
+          <div className={`flex-grow flex flex-col bg-[#F9FAFB] ${activeChat ? 'flex' : 'hidden md:flex'}`}>
             {activeChat ? (
               <>
-                <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#000035] text-white flex items-center justify-center font-bold">
-                      {activeChat.name?.charAt(0)}
+                <div className="h-20 px-6 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setActiveChat(null)} className="md:hidden p-2 text-slate-600">
+                      <ChevronLeft size={24} />
+                    </button>
+                    <div className="w-11 h-11 rounded-2xl bg-[#000035] text-white flex items-center justify-center font-bold">
+                      {(activeChat.name || activeChat.fullName || "?").charAt(0)}
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900">{activeChat.name}</h3>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{activeChat.name || activeChat.fullName}</h3>
+                      <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Active Conversation</p>
+                    </div>
                   </div>
+                  <button className="p-2 text-slate-400 hover:text-slate-600"><MoreVertical size={20} /></button>
                 </div>
 
-                <div className="flex-grow p-6 overflow-y-auto space-y-4">
-                  {messages.map((msg, idx) => (
-                    <div key={idx} className={`flex ${msg.sender === 'Admin' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] p-4 rounded-2xl shadow-sm ${
-                        msg.sender === 'Admin' 
-                        ? 'bg-[#000035] text-white rounded-tr-none' 
-                        : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
+                <div className="flex-grow overflow-y-auto p-6 md:p-8 space-y-6">
+                  {messages.map((msg) => (
+                    <div key={msg._id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[70%] p-4 rounded-2xl text-sm shadow-sm ${
+                        msg.sender === 'me' ? 'bg-[#000035] text-white rounded-tr-none' : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
                       }`}>
-                        <p className="text-sm">{msg.text}</p>
+                        {msg.text}
+                        <p className={`text-[10px] mt-2 ${msg.sender === 'me' ? 'text-white/50 text-right' : 'text-slate-400'}`}>
+                          {msg.time || new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
                     </div>
                   ))}
+                  <div ref={scrollRef} />
                 </div>
 
-                <div className="p-4 bg-white border-t border-slate-100">
-                  <form onSubmit={handleSendMessage} className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <div className="p-6 bg-white border-t border-slate-100 shrink-0">
+                  <form onSubmit={handleSend} className="flex items-center gap-3 max-w-4xl mx-auto bg-slate-50 p-2 pl-4 rounded-2xl border border-slate-200 focus-within:border-[#000035]/20 focus-within:ring-4 focus-within:ring-[#000035]/5 transition-all">
+                    <button type="button" className="text-slate-400 hover:text-slate-600 transition-colors"><Paperclip size={20} /></button>
                     <input 
                       type="text" 
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..." 
-                      className="flex-grow bg-transparent border-none text-sm focus:ring-0"
+                      placeholder="Write your message..." 
+                      className="flex-grow bg-transparent border-none outline-none text-sm py-2 px-1"
                     />
-                    <button type="submit" className="p-3 bg-[#000035] text-white rounded-xl hover:opacity-90 transition-all">
+                    <button type="submit" className="p-3 bg-[#000035] text-white rounded-xl shadow-md hover:bg-[#000050] active:scale-95 transition-all">
                       <Send size={18} />
                     </button>
                   </form>
                 </div>
               </>
             ) : (
-              <div className="flex-grow flex items-center justify-center text-slate-400">
-                <p>Select a candidate to start messaging</p>
+              <div className="flex-grow flex flex-col items-center justify-center text-slate-400 p-8 text-center bg-white">
+                <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-4 border border-slate-100">
+                  <Mail size={32} className="text-slate-300" />
+                </div>
+                <h3 className="text-slate-900 text-lg font-bold">Your Inbox</h3>
+                <p className="text-sm max-w-xs mt-1 text-slate-500">Select a candidate from the list to start a conversation or view history.</p>
               </div>
             )}
           </div>

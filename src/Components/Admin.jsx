@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { fetchCandidates, createJob, deleteJob, fetchJobs, deleteCandidate } from '../api/index'; 
+import { fetchCandidates, createJob, deleteJob, fetchJobs, deleteCandidate } from '../api/index';
 import Topbar from './Topbar';
 
 export default function Admin({ setSidebarOpen }) {
