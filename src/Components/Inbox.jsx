@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Send, MoreVertical, ChevronLeft, Paperclip, Loader2, Mail 
 } from 'lucide-react';
-import Topbar from '../components/Topbar'; 
+import Topbar from '../Components/Topbar'; 
 import { fetchCandidates } from '../api/index'; 
 
 // Production API base URL
