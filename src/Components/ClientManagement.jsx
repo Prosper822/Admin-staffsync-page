@@ -3,7 +3,7 @@ import {
   Search, Plus, MoreVertical, Building2, 
   Mail, Phone, ExternalLink, Loader2, Filter, X 
 } from 'lucide-react';
-import Topbar from '../components/Topbar';
+import Topbar from './Topbar';
 import { fetchClients } from '../api/index';
 
 const API_BASE_URL = 'https://staffsync-career-backend.vercel.app/api';

@@ -5,7 +5,7 @@ import Sidebar from "./Components/Sidebar";
 import Admin from "./Components/Admin";
 import Jobs from "./Components/Jobs";
 import Topbar from "./Components/Topbar";
-import Clients from "./Components/Clients.jsx";
+import Clients from "./Components/ClientManagement";
 import Recruitment from "./Components/Recruitment"
 import Inbox from "./Components/Inbox"
 
